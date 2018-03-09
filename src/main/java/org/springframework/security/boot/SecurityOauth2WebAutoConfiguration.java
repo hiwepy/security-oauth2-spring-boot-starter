@@ -27,7 +27,6 @@ import org.springframework.security.web.session.SimpleRedirectInvalidSessionStra
 import org.springframework.security.web.session.SimpleRedirectSessionInformationExpiredStrategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.scribejava.core.extractors.TokenExtractor;
 
 // http://blog.csdn.net/change_on/article/details/76302161
 @Configuration
