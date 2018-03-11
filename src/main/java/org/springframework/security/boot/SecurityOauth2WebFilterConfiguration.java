@@ -18,16 +18,20 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.boot.biz.authentication.ajax.AjaxAwareAuthenticationFailureHandler;
-import org.springframework.security.boot.jwt.authentication.ajax.AjaxAwareAuthenticationSuccessHandler;
+import org.springframework.security.boot.biz.authentication.ajax.AjaxAwareAuthenticationSuccessHandler;
 import org.springframework.security.boot.jwt.authentication.ajax.AjaxUsernamePasswordAuthenticationFilter;
 import org.springframework.security.boot.jwt.authentication.jwt.JwtTokenAuthenticationFilter;
 import org.springframework.security.boot.jwt.authentication.jwt.SkipPathRequestMatcher;
 import org.springframework.security.boot.jwt.authentication.jwt.extractor.TokenExtractor;
 import org.springframework.security.boot.utils.StringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -48,14 +52,13 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
-@AutoConfigureBefore(name = { 
-	"org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration",
-	"org.springframework.security.boot.SecurityBizWebFilterConfiguration"   // spring-boot-starter-security-biz
+@AutoConfigureBefore(name = { "org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration",
+		"org.springframework.security.boot.SecurityBizWebFilterConfiguration" // spring-boot-starter-security-biz
 })
 @ConditionalOnWebApplication
 @ConditionalOnProperty(prefix = SecurityOauth2Properties.PREFIX, value = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ SecurityOauth2Properties.class, SecurityBizProperties.class, ServerProperties.class })
-public class SecurityOauth2WebFilterConfiguration implements ApplicationContextAware {
+public class SecurityOauth2WebFilterConfiguration<OAuth2RestTemplate> implements ApplicationContextAware {
 
 	private ApplicationContext applicationContext;
 
@@ -65,12 +68,38 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 	private SecurityBizProperties bizProperties;
 	@Autowired
 	private ServerProperties serverProperties;
-
-
+	
 	@Bean
 	protected BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
+	
+	
+
+	
+	@Bean
+	@ConditionalOnMissingBean
+	public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+		return new HttpSessionOAuth2AuthorizationRequestRepository();
+	}
+
+	
+	
+	/*
+	 * @Autowired private OAuth2ClientContext oauth2Context;
+	 * 
+	 * @Bean public OAuth2RestTemplate sparklrRestTemplate() {
+	 
+	@Bean
+	@Scope(value = "session", proxyMode = ScopedProxyMode.INTERFACES)
+	public OAuth2RestOperations restTemplate() {
+		OAuth2RestTemplate template = new OAuth2RestTemplate(resource(),
+				new DefaultOAuth2ClientContext(accessTokenRequest));
+		AccessTokenProviderChain provider = new AccessTokenProviderChain(
+				Arrays.asList(new AuthorizationCodeAccessTokenProvider()));
+		provider.setClientTokenServices(clientTokenServices());
+		return template;
+	}*/
 
 	@Bean
 	@ConditionalOnMissingBean
@@ -81,10 +110,11 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 	@Bean
 	@ConditionalOnMissingBean
 	public AuthenticationSuccessHandler successHandler(ObjectMapper mapper) {
-		
+
 		// Ajax Login
-		if(bizProperties.isLoginAjax()) {
-			AjaxAwareAuthenticationSuccessHandler successHandler = new AjaxAwareAuthenticationSuccessHandler(mapper, jwtProperties);
+		if (bizProperties.isLoginAjax()) {
+			AjaxAwareAuthenticationSuccessHandler successHandler = new AjaxAwareAuthenticationSuccessHandler(mapper,
+					jwtProperties);
 			return successHandler;
 		}
 		// Form Login
@@ -93,14 +123,14 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 			successHandler.setDefaultTargetUrl(bizProperties.getSuccessUrl());
 			return successHandler;
 		}
-		
+
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
 	public AuthenticationFailureHandler failureHandler() {
 		// Ajax Login
-		if(bizProperties.isLoginAjax()) {
+		if (bizProperties.isLoginAjax()) {
 			return new AjaxAwareAuthenticationFailureHandler(bizProperties.getFailureUrl());
 		}
 		// Form Login
@@ -122,44 +152,47 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 	}
 
 	public static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    public static final String FORM_BASED_LOGIN_ENTRY_POINT = "/api/auth/login";
-    public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
-    public static final String TOKEN_REFRESH_ENTRY_POINT = "/api/auth/token";
-    
-    @Bean
+	public static final String FORM_BASED_LOGIN_ENTRY_POINT = "/api/auth/login";
+	public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
+	public static final String TOKEN_REFRESH_ENTRY_POINT = "/api/auth/token";
+
+	@Bean
 	@ConditionalOnMissingBean
 	public ObjectMapper objectMapper() {
 		return new ObjectMapper();
 	}
-    
-    @Bean
+
+	@Bean
 	@ConditionalOnMissingBean
-	public AjaxUsernamePasswordAuthenticationFilter jwtAjaxLoginProcessingFilter(AuthenticationFailureHandler failureHandler,
-			AuthenticationManager authenticationManager, ApplicationEventPublisher publisher,
+	public AjaxUsernamePasswordAuthenticationFilter jwtAjaxLoginProcessingFilter(
+			AuthenticationFailureHandler failureHandler, AuthenticationManager authenticationManager,
+			ApplicationEventPublisher publisher,
 			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource,
 			AuthenticationSuccessHandler successHandler, RememberMeServices rememberMeServices,
 			SessionAuthenticationStrategy sessionStrategy, ObjectMapper objectMapper) throws Exception {
-        //AjaxUsernamePasswordAuthenticationFilter filter = new AjaxUsernamePasswordAuthenticationFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler, objectMapper);
-        //filter.setAuthenticationManager(authenticationManager);
-        return null;
-    }
-    
-    @Bean
+		// AjaxUsernamePasswordAuthenticationFilter filter = new
+		// AjaxUsernamePasswordAuthenticationFilter(FORM_BASED_LOGIN_ENTRY_POINT,
+		// successHandler, failureHandler, objectMapper);
+		// filter.setAuthenticationManager(authenticationManager);
+		return null;
+	}
+
+	@Bean
 	@ConditionalOnMissingBean
 	public JwtTokenAuthenticationFilter jwtTokenAuthenticationProcessingFilter(
-    		AuthenticationFailureHandler failureHandler,
-    		TokenExtractor tokenExtractor,
+			AuthenticationFailureHandler failureHandler, TokenExtractor tokenExtractor,
 			AuthenticationManager authenticationManager, ApplicationEventPublisher publisher,
 			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource,
 			AuthenticationSuccessHandler successHandler, RememberMeServices rememberMeServices,
 			SessionAuthenticationStrategy sessionStrategy) throws Exception {
-    	
-        List<String> pathsToSkip = Arrays.asList(TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT);
-        SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
-        
-        JwtTokenAuthenticationFilter authenticationFilter  = new JwtTokenAuthenticationFilter(failureHandler, tokenExtractor, matcher);
-        
-        authenticationFilter.setAllowSessionCreation(false);
+
+		List<String> pathsToSkip = Arrays.asList(TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT);
+		SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
+
+		JwtTokenAuthenticationFilter authenticationFilter = new JwtTokenAuthenticationFilter(failureHandler,
+				tokenExtractor, matcher);
+
+		authenticationFilter.setAllowSessionCreation(false);
 		authenticationFilter.setApplicationEventPublisher(publisher);
 		authenticationFilter.setAuthenticationDetailsSource(authenticationDetailsSource);
 		authenticationFilter.setAuthenticationFailureHandler(failureHandler);
@@ -172,11 +205,10 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 		// authenticationFilter.setMessageSource(messageSource);
 		authenticationFilter.setRememberMeServices(rememberMeServices);
 		authenticationFilter.setSessionAuthenticationStrategy(sessionStrategy);
-        
-        return authenticationFilter;
-    }
-     
-	
+
+		return authenticationFilter;
+	}
+
 	@Bean
 	@ConditionalOnMissingBean
 	public AbstractAuthenticationProcessingFilter authenticationFilter(AuthenticationFailureHandler failureHandler,
@@ -210,14 +242,14 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 	@Bean
 	@ConditionalOnMissingBean
 	public AuthenticationEntryPoint authenticationEntryPoint() {
-		
+
 		LoginUrlAuthenticationEntryPoint entryPoint = new LoginUrlAuthenticationEntryPoint(bizProperties.getLoginUrl());
 		entryPoint.setForceHttps(bizProperties.isForceHttps());
 		entryPoint.setUseForward(bizProperties.isUseForward());
-		
+
 		return entryPoint;
 	}
-	
+
 	/**
 	 * 系统登录注销过滤器；默认：org.springframework.security.web.authentication.logout.LogoutFilter
 	 */
@@ -230,14 +262,14 @@ public class SecurityOauth2WebFilterConfiguration implements ApplicationContextA
 		return logoutFilter;
 	}
 
-	/*@Bean
-	public FilterRegistrationBean<HttpParamsFilter> httpParamsFilter() {
-		FilterRegistrationBean<HttpParamsFilter> filterRegistrationBean = new FilterRegistrationBean<HttpParamsFilter>();
-		filterRegistrationBean.setFilter(new HttpParamsFilter());
-		filterRegistrationBean.setOrder(-999);
-		filterRegistrationBean.addUrlPatterns("/");
-		return filterRegistrationBean;
-	}*/
+	/*
+	 * @Bean public FilterRegistrationBean<HttpParamsFilter> httpParamsFilter() {
+	 * FilterRegistrationBean<HttpParamsFilter> filterRegistrationBean = new
+	 * FilterRegistrationBean<HttpParamsFilter>();
+	 * filterRegistrationBean.setFilter(new HttpParamsFilter());
+	 * filterRegistrationBean.setOrder(-999);
+	 * filterRegistrationBean.addUrlPatterns("/"); return filterRegistrationBean; }
+	 */
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
