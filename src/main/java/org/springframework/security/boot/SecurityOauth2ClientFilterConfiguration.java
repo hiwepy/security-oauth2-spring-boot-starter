@@ -24,11 +24,16 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.boot.biz.authentication.ajax.AjaxAwareAuthenticationFailureHandler;
 import org.springframework.security.boot.biz.authentication.ajax.AjaxAwareAuthenticationSuccessHandler;
+import org.springframework.security.boot.biz.filter.CustomCorsFilter;
 import org.springframework.security.boot.jwt.authentication.ajax.AjaxUsernamePasswordAuthenticationFilter;
 import org.springframework.security.boot.jwt.authentication.jwt.JwtTokenAuthenticationFilter;
 import org.springframework.security.boot.jwt.authentication.jwt.SkipPathRequestMatcher;
 import org.springframework.security.boot.jwt.authentication.jwt.extractor.TokenExtractor;
 import org.springframework.security.boot.utils.StringUtils;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -58,7 +63,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ConditionalOnWebApplication
 @ConditionalOnProperty(prefix = SecurityOauth2Properties.PREFIX, value = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ SecurityOauth2Properties.class, SecurityBizProperties.class, ServerProperties.class })
-public class SecurityOauth2WebFilterConfiguration<OAuth2RestTemplate> implements ApplicationContextAware {
+public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> extends WebSecurityConfigurerAdapter implements ApplicationContextAware {
 
 	private ApplicationContext applicationContext;
 
@@ -74,7 +79,10 @@ public class SecurityOauth2WebFilterConfiguration<OAuth2RestTemplate> implements
 		return new BCryptPasswordEncoder();
 	}
 	
-	
+ 	@Bean
+ 	public OAuth2RestOperations restTemplate(OAuth2ClientContext oauth2ClientContext) {
+ 		return new OAuth2RestTemplate(remote(), oauth2ClientContext);
+ 	}
 
 	
 	@Bean
@@ -262,6 +270,39 @@ public class SecurityOauth2WebFilterConfiguration<OAuth2RestTemplate> implements
 		return logoutFilter;
 	}
 
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) {
+        auth.authenticationProvider(ajaxAuthenticationProvider);
+        auth.authenticationProvider(jwtAuthenticationProvider);
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+    	http
+        .csrf().disable() // We don't need CSRF for JWT based authentication
+        .exceptionHandling()
+        .authenticationEntryPoint(this.authenticationEntryPoint)
+        
+        .and()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+        .and()
+            .authorizeRequests()
+                .antMatchers(bizProperties.getLoginUrlPatterns()).permitAll() // Login end-point
+                .antMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
+                .antMatchers("/console").permitAll() // H2 Console Dash-board - only for testing
+        .and()
+            .authorizeRequests()
+                .antMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected API End-points
+        .and()
+            .addFilterBefore(new CustomCorsFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAjaxLoginProcessingFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtTokenAuthenticationProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+    }
+     
+    
 	/*
 	 * @Bean public FilterRegistrationBean<HttpParamsFilter> httpParamsFilter() {
 	 * FilterRegistrationBean<HttpParamsFilter> filterRegistrationBean = new
