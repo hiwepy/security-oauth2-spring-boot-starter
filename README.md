@@ -8,6 +8,8 @@ security starter for spring boot
 
 1. 整合 spring-security-oauth2-client 客户端实现基于 Oauth2 协议的资源访问鉴权
 
+https://www.cnblogs.com/fp2952/p/8973613.html
+
 
 ### Maven
 

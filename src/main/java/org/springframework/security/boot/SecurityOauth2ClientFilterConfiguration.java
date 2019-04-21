@@ -18,8 +18,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.boot.biz.authentication.ajax.AjaxAwareAuthenticationFailureHandler;
@@ -34,8 +32,10 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -74,6 +74,10 @@ public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> extends
 	@Autowired
 	private ServerProperties serverProperties;
 	
+	// 自动注入UserDetailsService
+    @Autowired
+    private UserDetailsService baseUserDetailService;
+    
 	@Bean
 	protected BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
