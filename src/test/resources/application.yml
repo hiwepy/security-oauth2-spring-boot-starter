@@ -1,2 +1,5 @@
-server:
-  port: 7900
+spring:
+  security:
+    oauth2:
+      client:
+        enabled: true
