@@ -1,4 +1,4 @@
-# spring-boot-starter-security-oauth2
+# security-oauth2-spring-boot-starter
 security starter for spring boot
 
 ### 说明
@@ -16,7 +16,7 @@ https://www.cnblogs.com/fp2952/p/8973613.html
 ``` xml
 <dependency>
 	<groupId>${project.groupId}</groupId>
-	<artifactId>spring-boot-starter-security-oauth2</artifactId>
+	<artifactId>security-oauth2-spring-boot-starter</artifactId>
 	<version>${project.version}</version>
 </dependency>
 ```
