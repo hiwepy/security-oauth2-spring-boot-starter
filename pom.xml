@@ -12,7 +12,7 @@
     
     <artifactId>security-oauth2-spring-boot-starter</artifactId>
     <description>Spring Boot Starter For Spring Security With OAuth 2.0</description>
-    <version>3.0.x.20260527-SNAPSHOT</version>
+    <version>3.0.x.20260630-SNAPSHOT</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/easy-4-java/${project.artifactId}</url>
     <packaging>jar</packaging>
@@ -409,6 +409,7 @@
     </profiles>
     
     <properties>
+        <java.version>17</java.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -419,7 +420,7 @@
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <maven-nexus-staging-plugin.version>1.6.8</maven-nexus-staging-plugin.version>
-        <spring-security-biz.version>1.0.4-SNAPSHOT</spring-security-biz.version>
+        <spring-security-biz.version>3.0.x.20260630-SNAPSHOT</spring-security-biz.version>
                 <slf4j.version>2.0.18</slf4j.version>
     </properties>
     
