@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 @AutoConfigureBefore(SecurityBizAutoConfiguration.class)
 @ConditionalOnProperty(prefix = SecurityOauth2ClientProperties.PREFIX, value = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ SecurityOauth2Properties.class, SecurityOauth2ClientProperties.class })
+/**\n * Auto-configuration for OAuth2 client security.\n *\n * @author [@Loong Wan](https://github.com/loong10k)\n * @since 1.0.0\n */
 public class SecurityOauth2ClientAutoConfiguration {
 
 	@Bean

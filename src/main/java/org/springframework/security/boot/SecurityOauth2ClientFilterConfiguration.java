@@ -30,6 +30,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 @ConditionalOnWebApplication
 @ConditionalOnProperty(prefix = SecurityOauth2Properties.PREFIX, value = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ SecurityOauth2Properties.class, SecurityBizProperties.class, ServerProperties.class })
+/**\n * Filter configuration for OAuth2 client security.\n *\n * @author [@Loong Wan](https://github.com/loong10k)\n * @since 1.0.0\n */
 public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> extends WebSecurityConfigurerAdapter implements ApplicationContextAware {
 
 	private ApplicationContext applicationContext;
