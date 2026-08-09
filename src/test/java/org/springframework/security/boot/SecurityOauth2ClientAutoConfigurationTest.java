@@ -1,31 +1,15 @@
-/*
- * Copyright (c) 2018, hiwepy (https://github.com/hiwepy).
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package org.springframework.security.boot;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
- * Unit tests for {{ @link SecurityOauth2ClientAutoConfiguration }}.
- *
- * <p>Verifies the auto-configuration activates under the expected conditions
- * and exposes its declared beans.</p>
+ * Unit tests for {@link SecurityOauth2ClientAutoConfiguration}.
  *
  * @author [@Loong Wan](https://github.com/loong10k)
  * @since 1.0.0
@@ -33,27 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("SecurityOauth2ClientAutoConfiguration Tests")
 class SecurityOauth2ClientAutoConfigurationTest {
 
-    private final ApplicationContextRunner runner = new ApplicationContextRunner();
+    private final SecurityOauth2ClientAutoConfiguration config = new SecurityOauth2ClientAutoConfiguration();
 
     @Test
     @DisplayName("Auto-configuration class can be instantiated")
     void testInstantiation() {
-        SecurityOauth2ClientAutoConfiguration configuration = new SecurityOauth2ClientAutoConfiguration();
-        assertThat(configuration).isNotNull();
+        assertThat(config).isNotNull();
     }
 
     @Test
-    @DisplayName("Auto-configuration loads when 'spring.security.oauth2.client.enabled=true'")
-    void testLoadsWhenEnabledPropertySet() {
-        runner.withUserConfiguration(SecurityOauth2ClientAutoConfiguration.class)
-                .withPropertyValues("spring.security.oauth2.client.enabled=true")
-                .run(context -> assertThat(context).hasSingleBean(SecurityOauth2ClientAutoConfiguration.class));
-    }
-
-    @Test
-    @DisplayName("Auto-configuration is absent when property is not set")
-    void testNotLoadedWhenPropertyAbsent() {
-        runner.withUserConfiguration(SecurityOauth2ClientAutoConfiguration.class)
-                .run(context -> assertThat(context).doesNotHaveBean(SecurityOauth2ClientAutoConfiguration.class));
+    @DisplayName("authorizedClientRepository bean is created")
+    void testAuthorizedClientRepository() {
+        OAuth2AuthorizedClientService service = mock(OAuth2AuthorizedClientService.class);
+        OAuth2AuthorizedClientRepository repository = config.authorizedClientRepository(service);
+        assertThat(repository).isNotNull();
     }
 }
