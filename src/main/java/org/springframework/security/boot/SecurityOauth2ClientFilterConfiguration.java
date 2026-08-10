@@ -31,7 +31,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Filter configuration for OAuth2 client security.
  *
- * @author [@Loong Wan](https://github.com/loong10k)
+ * @author <a href="https://github.com/loong10k">Loong Wan</a>
  * @since 1.0.0
  */
 public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> implements ApplicationContextAware {
