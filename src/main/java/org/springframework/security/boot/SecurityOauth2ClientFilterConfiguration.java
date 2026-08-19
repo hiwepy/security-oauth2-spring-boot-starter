@@ -46,11 +46,21 @@ public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> impleme
 	@Autowired
 	private UserDetailsService baseUserDetailService;
 
+	/**
+	 * password Encoder.
+	 *
+	 * @return the result
+	 */
 	@Bean
 	protected BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 
+	/**
+	 * authorization Request Repository.
+	 *
+	 * @return the result
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	@Order(8)
@@ -64,6 +74,12 @@ public class SecurityOauth2ClientFilterConfiguration<OAuth2RestTemplate> impleme
 		return http.build();
 	}
 
+	/**
+	 * Sets the application context.
+	 *
+	 * @param applicationContext the application context
+	 * @throws BeansException if an error occurs
+	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;

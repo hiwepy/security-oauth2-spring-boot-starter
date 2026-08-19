@@ -19,6 +19,12 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 /**\n * Auto-configuration for OAuth2 client security.\n *\n * @author <a href="https://github.com/loong10k">Loong Wan</a>\n * @since 1.0.0\n */
 public class SecurityOauth2ClientAutoConfiguration {
 
+	/**
+	 * authorized Client Repository.
+	 *
+	 * @param authorizedClientService the authorized client service
+	 * @return the result
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public OAuth2AuthorizedClientRepository authorizedClientRepository(OAuth2AuthorizedClientService authorizedClientService) {
